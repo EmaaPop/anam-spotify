@@ -1,6 +1,7 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { createClient, AnamEvent } from "@anam-ai/js-sdk";
 
 const SpotifyCoursesUI = () => {
   const [showModal, setShowModal] = useState(false);
@@ -8,7 +9,7 @@ const SpotifyCoursesUI = () => {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showExploreCourses, setShowExploreCourses] = useState(false);
   const [anamClient, setAnamClient] = useState<any>(null);
-  const [anamStatus, setAnamStatus] = useState('');
+  const [anamStatus, setAnamStatus] = useState("");
   const [showAnamPersona, setShowAnamPersona] = useState(false);
   const [showAnamPanel, setShowAnamPanel] = useState(false);
   const [anamLoading, setAnamLoading] = useState(false);
@@ -17,63 +18,50 @@ const SpotifyCoursesUI = () => {
   const initializeAnam = async () => {
     try {
       setAnamLoading(true);
-      setAnamStatus('Connecting to AI assistant...');
-      const response = await fetch('/api/session-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          personaConfig: {
-            name: 'Cara',
-            avatarId: '30fa96d0-26c4-4e55-94a0-517025942e18',
-            voiceId: '6bfbe25a-979d-40f3-a92b-5394170af54b',
-            brainType: 'ANAM_GPT_4O_MINI_V1',
-            systemPrompt: 'You are Cara, a helpful and friendly AI assistant. Keep responses conversational and concise.',
-          },
-        }),
+      setAnamStatus("Connecting to AI assistant...");
+      const response = await fetch("/api/session-token", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Session token error:', errorText);
-        throw new Error('Failed to get session token');
+        console.error("Session token error:", errorText);
+        throw new Error("Failed to get session token");
       }
       const { sessionToken } = await response.json();
-      const script = document.createElement('script');
-      script.src = 'https://esm.sh/@anam-ai/js-sdk@latest';
-      script.type = 'module';
-      document.head.appendChild(script);
-      await new Promise((resolve) => { script.onload = resolve; });
-      const createClient = (window as any).Anam?.createClient;
-      if (!createClient) throw new Error('Failed to load Anam SDK');
+
       const client = createClient(sessionToken);
       // Add Anam event listeners for debugging and loading state
-      client.addListener?.('SESSION_READY', () => {
+      client.addListener?.(AnamEvent.SESSION_READY, () => {
         setAnamLoading(false);
-        setAnamStatus('');
-        console.log('Anam SESSION_READY');
+        setAnamStatus("");
+        console.log("Anam SESSION_READY");
+        if (client) {
+          client.talk(
+            `Hello! I see you're interested in ${selectedTopics.join(
+              " and "
+            )}. I'm Cara, and I'm here to help you find the perfect courses. Let me show you some recommendations!`
+          );
+        }
       });
-      client.addListener?.('CONNECTION_ESTABLISHED', () => {
-        console.log('Anam CONNECTION_ESTABLISHED');
+      client.addListener?.(AnamEvent.CONNECTION_ESTABLISHED, () => {
+        console.log("Anam CONNECTION_ESTABLISHED");
       });
-      client.addListener?.('VIDEO_PLAY_STARTED', () => {
+      client.addListener?.(AnamEvent.VIDEO_PLAY_STARTED, () => {
         setAnamLoading(false);
-        setAnamStatus('');
-        console.log('Anam VIDEO_PLAY_STARTED');
+        setAnamStatus("");
+        console.log("Anam VIDEO_PLAY_STARTED");
       });
-      client.addListener?.('CONNECTION_CLOSED', () => {
-        setAnamStatus('Connection closed');
+      client.addListener?.(AnamEvent.CONNECTION_CLOSED, () => {
+        setAnamStatus("Connection closed");
         setAnamLoading(false);
-        console.log('Anam CONNECTION_CLOSED');
+        console.log("Anam CONNECTION_CLOSED");
       });
       await client.streamToVideoElement("anam-video");
       setAnamClient(client);
-      setTimeout(() => {
-        if (client) {
-          client.talk(`Hello! I see you're interested in ${selectedTopics.join(' and ')}. I'm Cara, and I'm here to help you find the perfect courses. Let me show you some recommendations!`);
-        }
-      }, 2000);
     } catch (error) {
-      console.error('Failed to initialize Anam:', error);
-      setAnamStatus('AI assistant unavailable');
+      console.error("Failed to initialize Anam:", error);
+      setAnamStatus("AI assistant unavailable");
       setAnamLoading(false);
     }
   };
@@ -119,7 +107,7 @@ const SpotifyCoursesUI = () => {
             <div className="w-1 h-1 bg-white rounded-full"></div>
           </div>
           <svg className="w-4 h-4" fill="white" viewBox="0 0 24 24">
-            <path d="M1 9l2-2v8a2 2 0 002 2h14a2 2 0 002-2V7l2 2V2L1 2v7z"/>
+            <path d="M1 9l2-2v8a2 2 0 002 2h14a2 2 0 002-2V7l2 2V2L1 2v7z" />
           </svg>
           <div className="bg-white text-black px-2 py-0.5 rounded text-xs font-bold">
             61
@@ -132,7 +120,11 @@ const SpotifyCoursesUI = () => {
       <div className="flex gap-3 px-4 mt-4">
         <div className="bg-gray-800 rounded-full px-4 py-2 text-sm flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gray-600 overflow-hidden">
-            <img src="/api/placeholder/32/32" alt="Music" className="w-full h-full object-cover" />
+            <img
+              src="/api/placeholder/32/32"
+              alt="Music"
+              className="w-full h-full object-cover"
+            />
           </div>
           <span>Music</span>
         </div>
@@ -142,7 +134,7 @@ const SpotifyCoursesUI = () => {
         <div className="bg-gray-800 rounded-full px-4 py-2 text-sm">
           Audiobooks
         </div>
-        <button 
+        <button
           onClick={() => setShowModal(true)}
           className="bg-green-500 rounded-full px-4 py-2 text-sm text-black font-semibold"
         >
@@ -153,28 +145,46 @@ const SpotifyCoursesUI = () => {
       {/* Main Content */}
       {!showExploreCourses ? (
         <div className="mt-8 px-4">
-          <h2 className="text-2xl font-bold mb-4">Popular & Trending Courses</h2>
-          
+          <h2 className="text-2xl font-bold mb-4">
+            Popular & Trending Courses
+          </h2>
+
           <div className="flex gap-4 overflow-x-auto pb-4">
             <div className="flex-shrink-0">
               <div className="w-40 h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                <img src="/api/placeholder/160/160" alt="Ancient History" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/160/160"
+                  alt="Ancient History"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div className="text-sm font-semibold">History of the Anci...</div>
+              <div className="text-sm font-semibold">
+                History of the Anci...
+              </div>
               <div className="text-xs text-gray-400">The Great Courses</div>
             </div>
-            
+
             <div className="flex-shrink-0">
               <div className="w-40 h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                <img src="/api/placeholder/160/160" alt="Meditation" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/160/160"
+                  alt="Meditation"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="text-sm font-semibold">Modern Meditatio...</div>
-              <div className="text-xs text-gray-400">Justin Michael Williams</div>
+              <div className="text-xs text-gray-400">
+                Justin Michael Williams
+              </div>
             </div>
-            
+
             <div className="flex-shrink-0">
               <div className="w-40 h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                <img src="/api/placeholder/160/160" alt="Ramit" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/160/160"
+                  alt="Ramit"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="text-sm font-semibold">Ramit</div>
               <div className="text-xs text-gray-400">Ramit Se</div>
@@ -202,11 +212,17 @@ const SpotifyCoursesUI = () => {
               <div className="relative z-10">
                 <div className="flex items-center gap-4">
                   <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">🤖</div>
+                    <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">
+                      🤖
+                    </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">Cara - Your AI Course Guide</h3>
-                    <p className="text-sm text-gray-300">Click to activate your AI assistant!</p>
+                    <h3 className="text-lg font-bold text-white mb-1">
+                      Cara - Your AI Course Guide
+                    </h3>
+                    <p className="text-sm text-gray-300">
+                      Click to activate your AI assistant!
+                    </p>
                   </div>
                 </div>
               </div>
@@ -233,19 +249,29 @@ const SpotifyCoursesUI = () => {
                       playsInline
                       muted
                       className="w-full h-full object-cover"
-                      style={{ transform: 'scale(1.5)' }}
+                      style={{ transform: "scale(1.5)" }}
                     ></video>
                   </div>
                   <div className="ml-6 flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">Cara - Your AI Course Guide</h3>
+                    <h3 className="text-lg font-bold text-white mb-1">
+                      Cara - Your AI Course Guide
+                    </h3>
                     {anamLoading ? (
-                      <p className="text-sm text-gray-300 flex items-center gap-2"><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Connecting...</p>
+                      <p className="text-sm text-gray-300 flex items-center gap-2">
+                        <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>{" "}
+                        Connecting...
+                      </p>
                     ) : (
-                      <p className="text-sm text-gray-300">{anamStatus || "I'll help you find the perfect courses based on your interests"}</p>
+                      <p className="text-sm text-gray-300">
+                        {anamStatus ||
+                          "I'll help you find the perfect courses based on your interests"}
+                      </p>
                     )}
                     <div className="flex gap-2 mt-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-400">AI Assistant Active</span>
+                      <span className="text-xs text-green-400">
+                        AI Assistant Active
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -253,28 +279,38 @@ const SpotifyCoursesUI = () => {
             )}
 
             {/* Push the rest of the UI down by 50% when Anam panel is open */}
-            <div style={{ marginTop: showAnamPanel ? '50vh' : 0 }}>
+            <div style={{ marginTop: showAnamPanel ? "50vh" : 0 }}>
               {/* Course Category Cards - Scrollable Grid */}
               <div className="space-y-4 mb-8">
                 {/* First Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gray-800 rounded-xl overflow-hidden">
                     <div className="h-32 bg-gray-700 relative overflow-hidden">
-                      <img src="/api/placeholder/200/128" alt="Popular" className="w-full h-full object-cover" />
+                      <img
+                        src="/api/placeholder/200/128"
+                        alt="Popular"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold">Popular &</h3>
                       <h3 className="font-semibold">Trending</h3>
                     </div>
                   </div>
-                  
+
                   <div className="bg-gray-800 rounded-xl overflow-hidden">
                     <div className="h-32 bg-gray-700 relative overflow-hidden">
-                      <img src="/api/placeholder/200/128" alt="Technology" className="w-full h-full object-cover" />
+                      <img
+                        src="/api/placeholder/200/128"
+                        alt="Technology"
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       <div className="absolute bottom-2 left-2 right-2">
                         <p className="text-xs">Cheat Code For</p>
-                        <p className="text-sm font-semibold">LinkedIn Replies</p>
+                        <p className="text-sm font-semibold">
+                          LinkedIn Replies
+                        </p>
                       </div>
                     </div>
                     <div className="p-4">
@@ -287,7 +323,11 @@ const SpotifyCoursesUI = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gray-800 rounded-xl overflow-hidden">
                     <div className="h-32 bg-gray-700 relative overflow-hidden">
-                      <img src="/api/placeholder/200/128" alt="Personal Development" className="w-full h-full object-cover" />
+                      <img
+                        src="/api/placeholder/200/128"
+                        alt="Personal Development"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold">Personal</h3>
@@ -296,11 +336,13 @@ const SpotifyCoursesUI = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Looking for something else */}
               <div className="mb-8">
                 <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-xl p-6 mb-4">
-                  <h2 className="text-xl font-bold">Looking for something else?</h2>
+                  <h2 className="text-xl font-bold">
+                    Looking for something else?
+                  </h2>
                 </div>
               </div>
 
@@ -318,27 +360,41 @@ const SpotifyCoursesUI = () => {
                     Technology
                   </div>
                 </div>
-                
+
                 <h2 className="text-2xl font-bold">Explore categories</h2>
-                
+
                 {/* New & Trending in Art & Design */}
                 <div>
-                  <h2 className="text-2xl font-bold mb-4">New & Trending in Art & Design</h2>
-                  
+                  <h2 className="text-2xl font-bold mb-4">
+                    New & Trending in Art & Design
+                  </h2>
+
                   <div className="flex gap-4 overflow-x-auto">
                     <div className="flex-shrink-0 w-40">
                       <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                        <img src="/api/placeholder/160/160" alt="Art Course 1" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/160/160"
+                          alt="Art Course 1"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
                     <div className="flex-shrink-0 w-40">
                       <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                        <img src="/api/placeholder/160/160" alt="Art Course 2" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/160/160"
+                          alt="Art Course 2"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
                     <div className="flex-shrink-0 w-40">
                       <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                        <img src="/api/placeholder/160/160" alt="Art Course 3" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/160/160"
+                          alt="Art Course 3"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
                   </div>
@@ -357,20 +413,28 @@ const SpotifyCoursesUI = () => {
                       <h2 className="text-2xl font-bold">AI & Technology</h2>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-4 overflow-x-auto pb-4">
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg overflow-hidden mb-2 relative">
-                        <img src="/api/placeholder/256/160" alt="10X Productivity" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/256/160"
+                          alt="10X Productivity"
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute bottom-4 left-4 right-4">
                           <p className="text-sm">unlock the</p>
                           <p className="text-2xl font-bold">POWER OF AI</p>
                         </div>
                       </div>
-                      <div className="text-sm font-semibold">10X Your Producti...</div>
-                      <div className="text-xs text-gray-400">The Expert Academy</div>
+                      <div className="text-sm font-semibold">
+                        10X Your Producti...
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        The Expert Academy
+                      </div>
                     </div>
-                    
+
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-black rounded-lg overflow-hidden mb-2 relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-500 to-pink-500 opacity-50"></div>
@@ -381,50 +445,78 @@ const SpotifyCoursesUI = () => {
                           LEARN AI
                         </div>
                         <div className="absolute bottom-4 left-4 right-4">
-                          <p className="text-lg font-bold">AI Music and Sound</p>
+                          <p className="text-lg font-bold">
+                            AI Music and Sound
+                          </p>
                           <p className="text-lg font-bold">Creation</p>
                         </div>
                       </div>
-                      <div className="text-sm font-semibold">AI Music and Soun...</div>
-                      <div className="text-xs text-gray-400">Superintelligent</div>
+                      <div className="text-sm font-semibold">
+                        AI Music and Soun...
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Superintelligent
+                      </div>
                     </div>
-                    
+
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
-                        <img src="/api/placeholder/256/160" alt="Ultimate Guide" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/256/160"
+                          alt="Ultimate Guide"
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
                           LEARN AI
                         </div>
                         <div className="absolute bottom-4 left-4 right-4">
-                          <p className="text-lg font-bold">The Ultimate Guide</p>
+                          <p className="text-lg font-bold">
+                            The Ultimate Guide
+                          </p>
                           <p className="text-lg font-bold">to AI for...</p>
                         </div>
                       </div>
                       <div className="text-sm font-semibold">The Ul...</div>
-                      <div className="text-xs text-gray-400">Superintelligent</div>
+                      <div className="text-xs text-gray-400">
+                        Superintelligent
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Ready to learn section */}
                 <div className="text-center py-8">
-                  <h2 className="text-2xl font-bold mb-4">Ready to learn a new skill today?</h2>
+                  <h2 className="text-2xl font-bold mb-4">
+                    Ready to learn a new skill today?
+                  </h2>
                   <button className="flex items-center gap-2 mx-auto text-green-400">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                     </svg>
-                    <span className="font-semibold">Edit your course topics</span>
+                    <span className="font-semibold">
+                      Edit your course topics
+                    </span>
                   </button>
                 </div>
 
                 {/* Popular & Trending Courses */}
                 <div>
-                  <h2 className="text-2xl font-bold mb-4">Popular & Trending Courses</h2>
-                  
+                  <h2 className="text-2xl font-bold mb-4">
+                    Popular & Trending Courses
+                  </h2>
+
                   <div className="flex gap-4 overflow-x-auto pb-4">
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg overflow-hidden mb-2 relative">
-                        <img src="/api/placeholder/256/160" alt="AI Prompts" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/256/160"
+                          alt="AI Prompts"
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
                           LEARN AI
                         </div>
@@ -434,12 +526,14 @@ const SpotifyCoursesUI = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-gray-200 rounded-lg overflow-hidden mb-2 relative">
                         <div className="absolute inset-0 flex items-center justify-center bg-white">
                           <div className="text-center p-4">
-                            <p className="text-xs text-gray-600 mb-2">Monday Monday</p>
+                            <p className="text-xs text-gray-600 mb-2">
+                              Monday Monday
+                            </p>
                             <div className="flex gap-2 text-[8px] text-gray-500 mb-2">
                               <span>Home</span>
                               <span>Common Project Podcast</span>
@@ -454,10 +548,14 @@ const SpotifyCoursesUI = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex-shrink-0 w-64">
                       <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
-                        <img src="/api/placeholder/256/160" alt="Get Ahead" className="w-full h-full object-cover" />
+                        <img
+                          src="/api/placeholder/256/160"
+                          alt="Get Ahead"
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute bottom-4 left-4 right-4">
                           <p className="text-xs">Get a</p>
                           <p className="text-lg font-bold">in 1 h</p>
@@ -475,7 +573,7 @@ const SpotifyCoursesUI = () => {
       {/* Modal Overlay - First Screen */}
       {showModal && !showTopicSelection && (
         <div className="absolute inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center px-6">
-          <button 
+          <button
             onClick={() => setShowModal(false)}
             className="absolute top-6 right-6 text-white text-3xl"
           >
@@ -486,7 +584,11 @@ const SpotifyCoursesUI = () => {
           <div className="flex gap-3 mb-8">
             <div className="relative">
               <div className="w-20 h-20 bg-pink-400 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src="/api/placeholder/80/80" alt="Course 1" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/80/80"
+                  alt="Course 1"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="absolute -top-2 -right-2 bg-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">
                 ★
@@ -496,18 +598,22 @@ const SpotifyCoursesUI = () => {
                 <div className="font-semibold">Useful AI for Profes</div>
               </div>
             </div>
-            
+
             <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center">
               <div className="text-center">
                 <div className="text-xs font-bold">EXACTLY</div>
                 <div className="text-xs">WHAT TO SAY</div>
               </div>
             </div>
-            
+
             <div className="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
-              <img src="/api/placeholder/80/80" alt="Course 3" className="w-full h-full object-cover" />
+              <img
+                src="/api/placeholder/80/80"
+                alt="Course 3"
+                className="w-full h-full object-cover"
+              />
             </div>
-            
+
             <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center">
               <div className="text-center text-xs">
                 <div className="text-[10px]">TO READ</div>
@@ -516,14 +622,18 @@ const SpotifyCoursesUI = () => {
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold mb-4">Help us understand what you like</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            Help us understand what you like
+          </h2>
           <p className="text-gray-400 text-center mb-8">
-            Tell us what you'd like to learn and we'll suggest courses to get you started.
+            Tell us what you'd like to learn and we'll suggest courses to get
+            you started.
           </p>
-          
-          <button 
+
+          <button
             onClick={() => setShowTopicSelection(true)}
-            className="bg-white text-black px-8 py-3 rounded-full font-semibold">
+            className="bg-white text-black px-8 py-3 rounded-full font-semibold"
+          >
             Select topics
           </button>
         </div>
@@ -544,7 +654,7 @@ const SpotifyCoursesUI = () => {
                 <div className="w-1 h-1 bg-white rounded-full"></div>
               </div>
               <svg className="w-4 h-4" fill="white" viewBox="0 0 24 24">
-                <path d="M1 9l2-2v8a2 2 0 002 2h14a2 2 0 002-2V7l2 2V2L1 2v7z"/>
+                <path d="M1 9l2-2v8a2 2 0 002 2h14a2 2 0 002-2V7l2 2V2L1 2v7z" />
               </svg>
               <div className="bg-white text-black px-2 py-0.5 rounded text-xs font-bold">
                 60
@@ -557,7 +667,11 @@ const SpotifyCoursesUI = () => {
           <div className="flex gap-3 px-4 mt-4">
             <div className="bg-gray-800 rounded-full px-4 py-2 text-sm flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gray-600 overflow-hidden">
-                <img src="/api/placeholder/32/32" alt="Music" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/32/32"
+                  alt="Music"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span>Music</span>
             </div>
@@ -574,7 +688,7 @@ const SpotifyCoursesUI = () => {
 
           {/* Topic Selection Content */}
           <div className="flex-1 flex flex-col px-6 mt-8 overflow-y-auto min-h-0">
-            <button 
+            <button
               onClick={() => {
                 setShowTopicSelection(false);
                 setShowModal(false);
@@ -588,41 +702,61 @@ const SpotifyCoursesUI = () => {
             <div className="flex gap-3 mb-8 justify-center">
               <div className="relative">
                 <div className="w-20 h-20 bg-pink-400 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img src="/api/placeholder/80/80" alt="Course 1" className="w-full h-full object-cover" />
+                  <img
+                    src="/api/placeholder/80/80"
+                    alt="Course 1"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="absolute -top-2 -right-2 bg-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">
                   ★
                 </div>
                 <div className="mt-1 text-xs text-center">
                   <div className="text-[10px] uppercase">Learn</div>
-                  <div className="font-semibold">Useful AI<br/>for Profes</div>
+                  <div className="font-semibold">
+                    Useful AI
+                    <br />
+                    for Profes
+                  </div>
                 </div>
               </div>
-              
+
               <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-xs font-bold">EXACTLY</div>
                   <div className="text-xs">WHAT TO SAY</div>
                 </div>
               </div>
-              
+
               <div className="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
-                <img src="/api/placeholder/80/80" alt="Course 3" className="w-full h-full object-cover" />
+                <img
+                  src="/api/placeholder/80/80"
+                  alt="Course 3"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              
+
               <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center">
                 <div className="text-center text-xs">
                   <div className="text-[10px]">TO READ</div>
-                  <div className="font-bold">CIA<br/>DOCUMENTS</div>
+                  <div className="font-bold">
+                    CIA
+                    <br />
+                    DOCUMENTS
+                  </div>
                 </div>
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold mb-2 text-center">Help us understand what you like</h2>
+            <h2 className="text-2xl font-bold mb-2 text-center">
+              Help us understand what you like
+            </h2>
             <p className="text-gray-400 text-center mb-8 text-sm">
-              Tell us what you'd like to learn and we'll suggest<br/>courses to get you started.
+              Tell us what you'd like to learn and we'll suggest
+              <br />
+              courses to get you started.
             </p>
-            
+
             <button className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold mx-auto block mb-8">
               Select topics
             </button>
@@ -632,35 +766,39 @@ const SpotifyCoursesUI = () => {
               <div className="w-1/3 h-full bg-gray-400 rounded-full"></div>
             </div>
 
-            <h2 className="text-2xl font-bold mb-6">What would you like to learn?</h2>
+            <h2 className="text-2xl font-bold mb-6">
+              What would you like to learn?
+            </h2>
 
             {/* Topic Grid */}
             <div className="grid grid-cols-2 gap-3 flex-1">
               {[
-                'Music & Audio',
-                'Film & Photo',
-                'Food & Drinks',
-                'Lifestyle',
-                'Art & Design',
-                'AI & Technology',
-                'Business & Finance',
-                'Personal Development',
-                'Health & Wellness',
-                'History'
+                "Music & Audio",
+                "Film & Photo",
+                "Food & Drinks",
+                "Lifestyle",
+                "Art & Design",
+                "AI & Technology",
+                "Business & Finance",
+                "Personal Development",
+                "Health & Wellness",
+                "History",
               ].map((topic, index) => (
                 <button
                   key={index}
                   onClick={() => {
                     if (selectedTopics.includes(topic)) {
-                      setSelectedTopics(selectedTopics.filter(t => t !== topic));
+                      setSelectedTopics(
+                        selectedTopics.filter((t) => t !== topic)
+                      );
                     } else {
                       setSelectedTopics([...selectedTopics, topic]);
                     }
                   }}
                   className={`px-4 py-3 rounded-full text-sm font-medium transition-colors ${
                     selectedTopics.includes(topic)
-                      ? 'bg-white text-black'
-                      : 'bg-gray-800 text-white'
+                      ? "bg-white text-black"
+                      : "bg-gray-800 text-white"
                   }`}
                 >
                   {topic}
@@ -671,7 +809,7 @@ const SpotifyCoursesUI = () => {
 
           {/* Done Button - Sticky at bottom */}
           <div className="px-6 pb-8 sticky bottom-0 bg-black z-10">
-            <button 
+            <button
               onClick={() => {
                 if (selectedTopics.length >= 2) {
                   setShowTopicSelection(false);
@@ -682,8 +820,8 @@ const SpotifyCoursesUI = () => {
               disabled={selectedTopics.length < 2}
               className={`w-full py-4 rounded-full font-bold text-lg transition-all ${
                 selectedTopics.length >= 2
-                  ? 'bg-green-500 text-black'
-                  : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                  ? "bg-green-500 text-black"
+                  : "bg-gray-800 text-gray-600 cursor-not-allowed"
               }`}
             >
               Done
@@ -700,15 +838,25 @@ const SpotifyCoursesUI = () => {
       {/* Now Playing Bar */}
       <div className="absolute bottom-20 left-4 right-4 bg-gray-800 rounded-lg p-3 flex items-center gap-3">
         <div className="w-12 h-12 bg-gray-600 rounded overflow-hidden">
-          <img src="/api/placeholder/48/48" alt="Now Playing" className="w-full h-full object-cover" />
+          <img
+            src="/api/placeholder/48/48"
+            alt="Now Playing"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="flex-1">
-          <div className="text-sm font-semibold">row - A COLORS ENCORE • FACESOUL</div>
+          <div className="text-sm font-semibold">
+            row - A COLORS ENCORE • FACESOUL
+          </div>
           <div className="text-xs text-green-400 flex items-center gap-1">
             <span className="text-green-400">⦿</span> AirPlay
           </div>
         </div>
-        <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-6 h-6 text-green-500"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
           <rect x="4" y="4" width="4" height="16" />
           <rect x="12" y="4" width="4" height="16" />
         </svg>
@@ -720,33 +868,33 @@ const SpotifyCoursesUI = () => {
         <div className="flex justify-around items-center py-2">
           <div className="flex flex-col items-center">
             <svg className="w-6 h-6" fill="white" viewBox="0 0 24 24">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
             </svg>
             <span className="text-xs mt-1">Home</span>
           </div>
           <div className="flex flex-col items-center text-gray-400">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
             <span className="text-xs mt-1">Search</span>
           </div>
           <div className="flex flex-col items-center text-gray-400">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
             </svg>
             <span className="text-xs mt-1">Your Library</span>
           </div>
           <div className="flex flex-col items-center text-gray-400">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
             </svg>
             <span className="text-xs mt-1">Create</span>
           </div>
         </div>
-        
+
         {/* Home Indicator */}
         <div className="flex justify-center pb-2">
           <div className="w-32 h-1 bg-white rounded-full"></div>
@@ -756,4 +904,4 @@ const SpotifyCoursesUI = () => {
   );
 };
 
-export default SpotifyCoursesUI; 
+export default SpotifyCoursesUI;
