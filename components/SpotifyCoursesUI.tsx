@@ -9,6 +9,7 @@ const SpotifyCoursesUI = () => {
   const [showExploreCourses, setShowExploreCourses] = useState(false);
   const [anamClient, setAnamClient] = useState<any>(null);
   const [anamStatus, setAnamStatus] = useState('');
+  const [showAnamPersona, setShowAnamPersona] = useState(false);
 
   // Initialize Anam AI
   const initializeAnam = async () => {
@@ -176,29 +177,48 @@ const SpotifyCoursesUI = () => {
         <div className="flex-1 overflow-y-auto pb-40">
           <div className="px-4 mt-8">
             {/* Anam AI Persona Section */}
-            <div className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-4 mb-6 relative overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-4 mb-6 relative overflow-hidden cursor-pointer group"
+              onClick={() => {
+                if (!showAnamPersona) {
+                  setShowAnamPersona(true);
+                  initializeAnam();
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-pressed={showAnamPersona}
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
               <div className="relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0">
-                    <video 
-                      id="anam-video" 
-                      autoPlay 
-                      playsInline 
-                      muted
-                      className="w-full h-full object-cover"
-                      style={{ transform: 'scale(1.5)' }}
-                    ></video>
+                  <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {showAnamPersona ? (
+                      <video 
+                        id="anam-video" 
+                        autoPlay 
+                        playsInline 
+                        muted
+                        className="w-full h-full object-cover"
+                        style={{ transform: 'scale(1.5)' }}
+                      ></video>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">🤖</div>
+                    )}
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-white mb-1">Alex - Your AI Course Guide</h3>
                     <p className="text-sm text-gray-300">
-                      {anamStatus || "I'll help you find the perfect courses based on your interests"}
+                      {showAnamPersona
+                        ? anamStatus || "I'll help you find the perfect courses based on your interests"
+                        : "Click to activate your AI assistant!"}
                     </p>
-                    <div className="flex gap-2 mt-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-400">AI Assistant Active</span>
-                    </div>
+                    {showAnamPersona && (
+                      <div className="flex gap-2 mt-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-green-400">AI Assistant Active</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -524,7 +544,7 @@ const SpotifyCoursesUI = () => {
           </div>
 
           {/* Topic Selection Content */}
-          <div className="flex-1 flex flex-col px-6 mt-8">
+          <div className="flex-1 flex flex-col px-6 mt-8 overflow-y-auto min-h-0">
             <button 
               onClick={() => {
                 setShowTopicSelection(false);
@@ -620,16 +640,14 @@ const SpotifyCoursesUI = () => {
             </div>
           </div>
 
-          {/* Done Button - Fixed at bottom */}
-          <div className="px-6 pb-8">
+          {/* Done Button - Sticky at bottom */}
+          <div className="px-6 pb-8 sticky bottom-0 bg-black z-10">
             <button 
               onClick={() => {
                 if (selectedTopics.length >= 2) {
                   setShowTopicSelection(false);
                   setShowModal(false);
                   setShowExploreCourses(true);
-                  // Initialize Anam AI after transition
-                  setTimeout(() => initializeAnam(), 500);
                 }
               }}
               disabled={selectedTopics.length < 2}
