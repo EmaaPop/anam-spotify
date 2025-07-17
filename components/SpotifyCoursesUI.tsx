@@ -202,40 +202,51 @@ const SpotifyCoursesUI = () => {
         <div className="flex-1 overflow-y-auto pb-40">
           <div className="px-4 mt-8">
             {/* Anam AI Persona Section */}
-            <div
-              className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-4 mb-6 relative overflow-hidden cursor-pointer group"
-              onClick={() => {
-                if (!showAnamPanel) {
-                  setShowAnamPanel(true);
-                }
-              }}
-              tabIndex={0}
-              role="button"
-              aria-pressed={showAnamPanel}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">
-                      🤖
+            {!showAnamPanel && (
+              <div
+                className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-4 mb-6 relative overflow-hidden cursor-pointer group"
+                onClick={() => {
+                  if (!showAnamPanel) {
+                    setShowAnamPanel(true);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-pressed={showAnamPanel}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">
+                        🤖
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      Cara - Your AI Course Guide
-                    </h3>
-                    <p className="text-sm text-gray-300">
-                      Click to activate your AI assistant!
-                    </p>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Speak with Carl
+                      </h3>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Anam AI Panel (top half, mobile column) */}
             {showAnamPanel && (
-              <div className="absolute left-0 top-0 w-full h-1/2 z-50 bg-gradient-to-r from-purple-900 to-blue-900 shadow-xl flex flex-col rounded-t-xl">
+              <div
+                className="fixed z-50 bg-gradient-to-r from-purple-900 to-blue-900 shadow-xl flex flex-col rounded-3xl"
+                style={{
+                  left: '10%',
+                  width: '70%',
+                  top: '150px', // below navbar/status bar 
+                  bottom: '60%', // This sets the bottom border
+                  maxWidth: '380px',
+                  right: '10%',
+                  margin: '0 auto',
+                  borderRadius: '2rem',
+                }}
+              >
                 <button
                   className="absolute top-2 right-4 text-white text-2xl z-10 bg-black/40 rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
                   onClick={() => {
@@ -247,7 +258,7 @@ const SpotifyCoursesUI = () => {
                   ×
                 </button>
                 <div className="flex-1 flex items-center justify-center">
-                  <div className="w-32 h-32 bg-black rounded-full overflow-hidden flex items-center justify-center">
+                  <div className="w-48 h-48 bg-black rounded-full overflow-hidden flex items-center justify-center ml-1">
                     <video
                       id="anam-video"
                       autoPlay
@@ -257,9 +268,7 @@ const SpotifyCoursesUI = () => {
                     ></video>
                   </div>
                   <div className="ml-6 flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      Cara - Your AI Course Guide
-                    </h3>
+                    <h3 className="text-lg font-bold text-white mb-1">Speak to Carl</h3>
                     {anamLoading ? (
                       <p className="text-sm text-gray-300 flex items-center gap-2">
                         <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>{" "}
@@ -283,7 +292,7 @@ const SpotifyCoursesUI = () => {
             )}
 
             {/* Push the rest of the UI down by 50% when Anam panel is open */}
-            <div style={{ marginTop: showAnamPanel ? "50vh" : 0 }}>
+            <div style={{ marginTop: showAnamPanel ? "calc(35vh - 10px)" : 0 }}>
               {/* Course Category Cards - Scrollable Grid */}
               <div className="space-y-4 mb-8">
                 {/* First Row */}
