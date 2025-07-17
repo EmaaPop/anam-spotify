@@ -247,7 +247,6 @@ const SpotifyCoursesUI = () => {
                       id="anam-video"
                       autoPlay
                       playsInline
-                      muted
                       className="w-full h-full object-cover"
                       style={{ transform: "scale(1.5)" }}
                     ></video>
