@@ -13,6 +13,7 @@ const SpotifyCoursesUI = () => {
   const [showAnamPersona, setShowAnamPersona] = useState(false);
   const [showAnamPanel, setShowAnamPanel] = useState(false);
   const [anamLoading, setAnamLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'music' | 'courses'>("music");
 
   // Initialize Anam AI
   const initializeAnam = async () => {
@@ -118,28 +119,32 @@ const SpotifyCoursesUI = () => {
 
       {/* Navigation Pills */}
       <div className="flex gap-3 px-4 mt-4">
-        <div className="bg-gray-800 rounded-full px-4 py-2 text-sm flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gray-600 overflow-hidden">
-            <img
-              src="/api/placeholder/32/32"
-              alt="Music"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span>Music</span>
-        </div>
-        <div className="bg-gray-800 rounded-full px-4 py-2 text-sm">
-          Podcasts
-        </div>
-        <div className="bg-gray-800 rounded-full px-4 py-2 text-sm">
-          Audiobooks
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-green-500 rounded-full px-4 py-2 text-sm text-black font-semibold"
+        <div
+          className={`flex-1 flex flex-col items-center justify-center rounded-full h-14 cursor-pointer font-semibold transition-colors ${
+            activeTab === "music"
+              ? "bg-green-500 text-black"
+              : "bg-gray-800 text-white"
+          }`}
+          onClick={() => setActiveTab("music")}
         >
-          Courses
-        </button>
+          <span className="text-sm text-center">Music</span>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center bg-gray-800 rounded-full h-14 cursor-pointer">
+          <span className="text-sm text-center">Podcasts</span>
+        </div>
+        <div
+          className={`flex-1 flex flex-col items-center justify-center rounded-full h-14 cursor-pointer font-semibold transition-colors ${
+            activeTab === "courses"
+              ? "bg-green-500 text-black"
+              : "bg-gray-800 text-white"
+          }`}
+          onClick={() => {
+            setActiveTab("courses");
+            setShowModal(true);
+          }}
+        >
+          <span className="text-sm text-center">Courses</span>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -580,50 +585,19 @@ const SpotifyCoursesUI = () => {
           </button>
 
           {/* Course Icons */}
-          <div className="flex gap-3 mb-8">
-            <div className="relative">
-              <div className="w-20 h-20 bg-pink-400 rounded-lg flex items-center justify-center overflow-hidden">
-                <img
-                  src="/api/placeholder/80/80"
-                  alt="Course 1"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -top-2 -right-2 bg-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                ★
-              </div>
-              <div className="mt-1 text-xs text-center">
-                <div className="text-[10px] uppercase">Learn</div>
-                <div className="font-semibold">Useful AI for Profes</div>
-              </div>
+          <div className="flex gap-3 mb-8 justify-center">
+            <div className="w-20 h-20 bg-pink-400 rounded-lg flex items-center justify-center overflow-hidden">
+              <span className="text-white font-bold text-lg">Course 1</span>
             </div>
-
-            <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-xs font-bold">EXACTLY</div>
-                <div className="text-xs">WHAT TO SAY</div>
-              </div>
+            <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+              <span className="text-white font-bold text-lg">Course 2</span>
             </div>
-
-            <div className="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
-              <img
-                src="/api/placeholder/80/80"
-                alt="Course 3"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center">
-              <div className="text-center text-xs">
-                <div className="text-[10px]">TO READ</div>
-                <div className="font-bold">CIA DOCUMENTS</div>
-              </div>
+            <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+              <span className="text-white font-bold text-lg">Course 3</span>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold mb-4">
-            Help us understand what you like
-          </h2>
+          <h2 className="text-2xl font-bold mb-4 text-center w-full">Help us understand what you like</h2>
           <p className="text-gray-400 text-center mb-8">
             Tell us what you'd like to learn and we'll suggest courses to get
             you started.
@@ -664,167 +638,127 @@ const SpotifyCoursesUI = () => {
 
           {/* Navigation Pills */}
           <div className="flex gap-3 px-4 mt-4">
-            <div className="bg-gray-800 rounded-full px-4 py-2 text-sm flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gray-600 overflow-hidden">
-                <img
-                  src="/api/placeholder/32/32"
-                  alt="Music"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span>Music</span>
+            <div
+              className={`flex-1 flex flex-col items-center justify-center rounded-full h-14 cursor-pointer font-semibold transition-colors ${
+                activeTab === "music"
+                  ? "bg-green-500 text-black"
+                  : "bg-gray-800 text-white"
+              }`}
+              onClick={() => setActiveTab("music")}
+            >
+              <span className="text-sm text-center">Music</span>
             </div>
-            <div className="bg-gray-800 rounded-full px-4 py-2 text-sm">
-              Podcasts
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-800 rounded-full h-14 cursor-pointer">
+              <span className="text-sm text-center">Podcasts</span>
             </div>
-            <div className="bg-gray-800 rounded-full px-4 py-2 text-sm">
-              Audiobooks
-            </div>
-            <div className="bg-green-500 rounded-full px-4 py-2 text-sm text-black font-semibold">
-              Courses
+            <div
+              className={`flex-1 flex flex-col items-center justify-center rounded-full h-14 cursor-pointer font-semibold transition-colors ${
+                activeTab === "courses"
+                  ? "bg-green-500 text-black"
+                  : "bg-gray-800 text-white"
+              }`}
+              onClick={() => {
+                setActiveTab("courses");
+              }}
+            >
+              <span className="text-sm text-center">Courses</span>
             </div>
           </div>
 
           {/* Topic Selection Content */}
-          <div className="flex-1 flex flex-col px-6 mt-8 overflow-y-auto min-h-0">
+          <div className="flex-1 flex flex-col px-6 mt-8 overflow-y-auto min-h-0 relative">
             <button
               onClick={() => {
                 setShowTopicSelection(false);
                 setShowModal(false);
               }}
-              className="absolute top-20 right-6 text-white text-3xl"
+              className="absolute top-20 right-6 text-white text-3xl z-10"
             >
               ×
             </button>
 
-            {/* Course Icons */}
-            <div className="flex gap-3 mb-8 justify-center">
-              <div className="relative">
+            {/* Background content to be blurred/dimmed */}
+            <div className="relative z-0 pointer-events-none opacity-60 select-none">
+              <div className="flex gap-3 mb-8 justify-center">
                 <div className="w-20 h-20 bg-pink-400 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/api/placeholder/80/80"
-                    alt="Course 1"
-                    className="w-full h-full object-cover"
-                  />
+                  <span className="text-white font-bold text-lg">Course 1</span>
                 </div>
-                <div className="absolute -top-2 -right-2 bg-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                  ★
+                <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                  <span className="text-white font-bold text-lg">Course 2</span>
                 </div>
-                <div className="mt-1 text-xs text-center">
-                  <div className="text-[10px] uppercase">Learn</div>
-                  <div className="font-semibold">
-                    Useful AI
-                    <br />
-                    for Profes
-                  </div>
+                <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                  <span className="text-white font-bold text-lg">Course 3</span>
                 </div>
               </div>
-
-              <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xs font-bold">EXACTLY</div>
-                  <div className="text-xs">WHAT TO SAY</div>
-                </div>
-              </div>
-
-              <div className="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
-                <img
-                  src="/api/placeholder/80/80"
-                  alt="Course 3"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center">
-                <div className="text-center text-xs">
-                  <div className="text-[10px]">TO READ</div>
-                  <div className="font-bold">
-                    CIA
-                    <br />
-                    DOCUMENTS
-                  </div>
-                </div>
-              </div>
+              <h2 className="text-2xl font-bold mb-2 text-center w-full">Help us understand what you like</h2>
+              <p className="text-gray-400 text-center mb-8 text-sm">
+                Tell us what you'd like to learn and we'll suggest
+                <br />
+                courses to get you started.
+              </p>
+              <button className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold mx-auto block mb-8">
+                Select topics
+              </button>
             </div>
 
-            <h2 className="text-2xl font-bold mb-2 text-center">
-              Help us understand what you like
-            </h2>
-            <p className="text-gray-400 text-center mb-8 text-sm">
-              Tell us what you'd like to learn and we'll suggest
-              <br />
-              courses to get you started.
-            </p>
-
-            <button className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold mx-auto block mb-8">
-              Select topics
-            </button>
-
-            {/* Progress bar */}
-            <div className="w-32 h-1 bg-gray-700 rounded-full mx-auto mb-8">
-              <div className="w-1/3 h-full bg-gray-400 rounded-full"></div>
-            </div>
-
-            <h2 className="text-2xl font-bold mb-6">
-              What would you like to learn?
-            </h2>
-
-            {/* Topic Grid */}
-            <div className="grid grid-cols-2 gap-3 flex-1">
-              {[
-                "Music & Audio",
-                "Film & Photo",
-                "Food & Drinks",
-                "Lifestyle",
-                "Art & Design",
-                "AI & Technology",
-                "Business & Finance",
-                "Personal Development",
-                "Health & Wellness",
-                "History",
-              ].map((topic, index) => (
+            {/* Overlay: What would you like to learn? group */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              <div className="rounded-2xl bg-black/60 backdrop-blur-md p-6 w-full max-w-md mx-auto flex flex-col items-center">
+                <h2 className="text-2xl font-bold mb-6 text-center w-full">What would you like to learn?</h2>
+                {/* Topic Grid */}
+                <div className="grid grid-cols-2 gap-3 w-full mb-6">
+                  {[
+                    "Music & Audio",
+                    "Film & Photo",
+                    "Food & Drinks",
+                    "Lifestyle",
+                    "Art & Design",
+                    "AI & Technology",
+                    "Business & Finance",
+                    "Personal Development",
+                    "Health & Wellness",
+                    "History",
+                  ].map((topic, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (selectedTopics.includes(topic)) {
+                          setSelectedTopics(
+                            selectedTopics.filter((t) => t !== topic)
+                          );
+                        } else {
+                          setSelectedTopics([...selectedTopics, topic]);
+                        }
+                      }}
+                      className={`px-4 py-3 rounded-full text-sm font-medium transition-colors ${
+                        selectedTopics.includes(topic)
+                          ? "bg-white text-black"
+                          : "bg-gray-800 text-white"
+                      }`}
+                    >
+                      {topic}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  key={index}
                   onClick={() => {
-                    if (selectedTopics.includes(topic)) {
-                      setSelectedTopics(
-                        selectedTopics.filter((t) => t !== topic)
-                      );
-                    } else {
-                      setSelectedTopics([...selectedTopics, topic]);
+                    if (selectedTopics.length >= 2) {
+                      setShowTopicSelection(false);
+                      setShowModal(false);
+                      setShowExploreCourses(true);
                     }
                   }}
-                  className={`px-4 py-3 rounded-full text-sm font-medium transition-colors ${
-                    selectedTopics.includes(topic)
-                      ? "bg-white text-black"
-                      : "bg-gray-800 text-white"
+                  disabled={selectedTopics.length < 2}
+                  className={`w-full py-4 rounded-full font-bold text-lg transition-all ${
+                    selectedTopics.length >= 2
+                      ? "bg-green-500 text-black"
+                      : "bg-gray-800 text-gray-600 cursor-not-allowed"
                   }`}
                 >
-                  {topic}
+                  Done
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
-
-          {/* Done Button - Sticky at bottom */}
-          <div className="px-6 pb-8 sticky bottom-0 bg-black z-10">
-            <button
-              onClick={() => {
-                if (selectedTopics.length >= 2) {
-                  setShowTopicSelection(false);
-                  setShowModal(false);
-                  setShowExploreCourses(true);
-                }
-              }}
-              disabled={selectedTopics.length < 2}
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all ${
-                selectedTopics.length >= 2
-                  ? "bg-green-500 text-black"
-                  : "bg-gray-800 text-gray-600 cursor-not-allowed"
-              }`}
-            >
-              Done
-            </button>
           </div>
 
           {/* Home Indicator */}
