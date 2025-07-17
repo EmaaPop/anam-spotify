@@ -10,73 +10,71 @@ const SpotifyCoursesUI = () => {
   const [anamClient, setAnamClient] = useState<any>(null);
   const [anamStatus, setAnamStatus] = useState('');
   const [showAnamPersona, setShowAnamPersona] = useState(false);
+  const [showAnamPanel, setShowAnamPanel] = useState(false);
+  const [anamLoading, setAnamLoading] = useState(false);
 
   // Initialize Anam AI
   const initializeAnam = async () => {
     try {
+      setAnamLoading(true);
       setAnamStatus('Connecting to AI assistant...');
-      
-      // Using the provided API key
-      const API_KEY = 'YTljNTdlOWQtYzQ0OS00YTI4LWJhNDEtY2MwNGU2NDk4YzBiOno3UlI3Z1l2d0pwWHo2cnkzYUUzek41VWh1dnQyTXJRZTlnTzRkOCsrUXM9';
-      
-      const response = await fetch("https://api.anam.ai/v1/auth/session-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
-        },
+      const response = await fetch('/api/session-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           personaConfig: {
-            name: "Alex",
-            avatarId: "30fa96d0-26c4-4e55-94a0-517025942e18", // Cara avatar
-            voiceId: "6bfbe25a-979d-40f3-a92b-5394170af54b", // Cara voice
-            brainType: "ANAM_GPT_4O_MINI_V1",
-            systemPrompt: `You are Alex, a friendly AI course advisor for Spotify Courses. 
-            The user has just selected topics: ${selectedTopics.join(', ')}. 
-            Welcome them warmly and help them discover courses that match their interests. 
-            Keep responses brief and enthusiastic.`,
+            name: 'Cara',
+            avatarId: '30fa96d0-26c4-4e55-94a0-517025942e18',
+            voiceId: '6bfbe25a-979d-40f3-a92b-5394170af54b',
+            brainType: 'ANAM_GPT_4O_MINI_V1',
+            systemPrompt: 'You are Cara, a helpful and friendly AI assistant. Keep responses conversational and concise.',
           },
         }),
       });
-      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Session token error:', errorText);
+        throw new Error('Failed to get session token');
+      }
       const { sessionToken } = await response.json();
-      
-      // Load Anam SDK from CDN
       const script = document.createElement('script');
       script.src = 'https://esm.sh/@anam-ai/js-sdk@latest';
       script.type = 'module';
       document.head.appendChild(script);
-      
-      // Wait for script to load
-      await new Promise((resolve) => {
-        script.onload = resolve;
-      });
-      
-      // Access the global Anam object
+      await new Promise((resolve) => { script.onload = resolve; });
       const createClient = (window as any).Anam?.createClient;
-      
-      if (!createClient) {
-        throw new Error('Failed to load Anam SDK');
-      }
-      
+      if (!createClient) throw new Error('Failed to load Anam SDK');
       const client = createClient(sessionToken);
-      
-      // Start streaming to video element
+      // Add Anam event listeners for debugging and loading state
+      client.addListener?.('SESSION_READY', () => {
+        setAnamLoading(false);
+        setAnamStatus('');
+        console.log('Anam SESSION_READY');
+      });
+      client.addListener?.('CONNECTION_ESTABLISHED', () => {
+        console.log('Anam CONNECTION_ESTABLISHED');
+      });
+      client.addListener?.('VIDEO_PLAY_STARTED', () => {
+        setAnamLoading(false);
+        setAnamStatus('');
+        console.log('Anam VIDEO_PLAY_STARTED');
+      });
+      client.addListener?.('CONNECTION_CLOSED', () => {
+        setAnamStatus('Connection closed');
+        setAnamLoading(false);
+        console.log('Anam CONNECTION_CLOSED');
+      });
       await client.streamToVideoElement("anam-video");
-      
       setAnamClient(client);
-      setAnamStatus('');
-      
-      // Send initial greeting
       setTimeout(() => {
         if (client) {
-          client.talk(`Hello! I see you're interested in ${selectedTopics.join(' and ')}. I'm Alex, and I'm here to help you find the perfect courses. Let me show you some recommendations!`);
+          client.talk(`Hello! I see you're interested in ${selectedTopics.join(' and ')}. I'm Cara, and I'm here to help you find the perfect courses. Let me show you some recommendations!`);
         }
       }, 2000);
-      
     } catch (error) {
       console.error('Failed to initialize Anam:', error);
       setAnamStatus('AI assistant unavailable');
+      setAnamLoading(false);
     }
   };
 
@@ -94,6 +92,18 @@ const SpotifyCoursesUI = () => {
       cleanupAnam();
     };
   }, []);
+
+  // When showAnamPanel becomes true, initialize Anam with Cara persona and provided API key
+  useEffect(() => {
+    if (showAnamPanel) {
+      initializeAnam();
+    }
+    // Clean up when panel closes
+    return () => {
+      if (!showAnamPanel) cleanupAnam();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAnamPanel]);
 
   return (
     <div className="bg-black text-white h-screen w-full max-w-[390px] mx-auto relative overflow-hidden">
@@ -180,259 +190,278 @@ const SpotifyCoursesUI = () => {
             <div
               className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-4 mb-6 relative overflow-hidden cursor-pointer group"
               onClick={() => {
-                if (!showAnamPersona) {
-                  setShowAnamPersona(true);
-                  initializeAnam();
+                if (!showAnamPanel) {
+                  setShowAnamPanel(true);
                 }
               }}
               tabIndex={0}
               role="button"
-              aria-pressed={showAnamPersona}
+              aria-pressed={showAnamPanel}
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
               <div className="relative z-10">
                 <div className="flex items-center gap-4">
                   <div className="w-24 h-24 bg-black rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    {showAnamPersona ? (
-                      <video 
-                        id="anam-video" 
-                        autoPlay 
-                        playsInline 
-                        muted
-                        className="w-full h-full object-cover"
-                        style={{ transform: 'scale(1.5)' }}
-                      ></video>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">🤖</div>
-                    )}
+                    <div className="w-full h-full flex items-center justify-center text-5xl text-white/40 group-hover:text-white/80 transition-colors">🤖</div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">Alex - Your AI Course Guide</h3>
-                    <p className="text-sm text-gray-300">
-                      {showAnamPersona
-                        ? anamStatus || "I'll help you find the perfect courses based on your interests"
-                        : "Click to activate your AI assistant!"}
-                    </p>
-                    {showAnamPersona && (
-                      <div className="flex gap-2 mt-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-green-400">AI Assistant Active</span>
-                      </div>
-                    )}
+                    <h3 className="text-lg font-bold text-white mb-1">Cara - Your AI Course Guide</h3>
+                    <p className="text-sm text-gray-300">Click to activate your AI assistant!</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold mb-6">Explore Courses</h1>
-            
-            {/* Course Category Cards - Scrollable Grid */}
-            <div className="space-y-4 mb-8">
-              {/* First Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-800 rounded-xl overflow-hidden">
-                  <div className="h-32 bg-gray-700 relative overflow-hidden">
-                    <img src="/api/placeholder/200/128" alt="Popular" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold">Popular &</h3>
-                    <h3 className="font-semibold">Trending</h3>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-800 rounded-xl overflow-hidden">
-                  <div className="h-32 bg-gray-700 relative overflow-hidden">
-                    <img src="/api/placeholder/200/128" alt="Technology" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <p className="text-xs">Cheat Code For</p>
-                      <p className="text-sm font-semibold">LinkedIn Replies</p>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold">Technology</h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* Second Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-800 rounded-xl overflow-hidden">
-                  <div className="h-32 bg-gray-700 relative overflow-hidden">
-                    <img src="/api/placeholder/200/128" alt="Personal Development" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold">Personal</h3>
-                    <h3 className="font-semibold">Development</h3>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Looking for something else */}
-            <div className="mb-8">
-              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-xl p-6 mb-4">
-                <h2 className="text-xl font-bold">Looking for something else?</h2>
-              </div>
-            </div>
-
-            {/* Continue scrolling content below */}
-            <div className="space-y-8">
-              {/* Category Pills */}
-              <div className="flex flex-wrap gap-3">
-                <div className="bg-blue-800 px-4 py-2 rounded-full text-sm">
-                  Business & Finance
-                </div>
-                <div className="bg-orange-800 px-4 py-2 rounded-full text-sm">
-                  Photo & Video
-                </div>
-                <div className="bg-purple-800 px-4 py-2 rounded-full text-sm">
-                  Technology
-                </div>
-              </div>
-              
-              <h2 className="text-2xl font-bold">Explore categories</h2>
-              
-              {/* New & Trending in Art & Design */}
-              <div>
-                <h2 className="text-2xl font-bold mb-4">New & Trending in Art & Design</h2>
-                
-                <div className="flex gap-4 overflow-x-auto">
-                  <div className="flex-shrink-0 w-40">
-                    <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                      <img src="/api/placeholder/160/160" alt="Art Course 1" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 w-40">
-                    <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                      <img src="/api/placeholder/160/160" alt="Art Course 2" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 w-40">
-                    <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
-                      <img src="/api/placeholder/160/160" alt="Art Course 3" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI & Technology Section */}
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
-                    <div className="text-white text-xs font-bold text-center">
-                      <div>AI</div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Explore</p>
-                    <h2 className="text-2xl font-bold">AI & Technology</h2>
-                  </div>
-                </div>
-                
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg overflow-hidden mb-2 relative">
-                      <img src="/api/placeholder/256/160" alt="10X Productivity" className="w-full h-full object-cover" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-sm">unlock the</p>
-                        <p className="text-2xl font-bold">POWER OF AI</p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold">10X Your Producti...</div>
-                    <div className="text-xs text-gray-400">The Expert Academy</div>
-                  </div>
-                  
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-black rounded-lg overflow-hidden mb-2 relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-500 to-pink-500 opacity-50"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-32 h-20 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 blur-xl"></div>
-                      </div>
-                      <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
-                        LEARN AI
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-lg font-bold">AI Music and Sound</p>
-                        <p className="text-lg font-bold">Creation</p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold">AI Music and Soun...</div>
-                    <div className="text-xs text-gray-400">Superintelligent</div>
-                  </div>
-                  
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
-                      <img src="/api/placeholder/256/160" alt="Ultimate Guide" className="w-full h-full object-cover" />
-                      <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
-                        LEARN AI
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-lg font-bold">The Ultimate Guide</p>
-                        <p className="text-lg font-bold">to AI for...</p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold">The Ul...</div>
-                    <div className="text-xs text-gray-400">Superintelligent</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ready to learn section */}
-              <div className="text-center py-8">
-                <h2 className="text-2xl font-bold mb-4">Ready to learn a new skill today?</h2>
-                <button className="flex items-center gap-2 mx-auto text-green-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                  </svg>
-                  <span className="font-semibold">Edit your course topics</span>
+            {/* Anam AI Panel (top half, mobile column) */}
+            {showAnamPanel && (
+              <div className="absolute left-0 top-0 w-full h-1/2 z-50 bg-gradient-to-r from-purple-900 to-blue-900 shadow-xl flex flex-col rounded-t-xl">
+                <button
+                  className="absolute top-2 right-4 text-white text-2xl z-10 bg-black/40 rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition"
+                  onClick={() => {
+                    setShowAnamPanel(false);
+                    cleanupAnam();
+                  }}
+                  aria-label="Close AI Panel"
+                >
+                  ×
                 </button>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-black rounded-full overflow-hidden flex items-center justify-center">
+                    <video
+                      id="anam-video"
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                      style={{ transform: 'scale(1.5)' }}
+                    ></video>
+                  </div>
+                  <div className="ml-6 flex-1">
+                    <h3 className="text-lg font-bold text-white mb-1">Cara - Your AI Course Guide</h3>
+                    {anamLoading ? (
+                      <p className="text-sm text-gray-300 flex items-center gap-2"><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Connecting...</p>
+                    ) : (
+                      <p className="text-sm text-gray-300">{anamStatus || "I'll help you find the perfect courses based on your interests"}</p>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-400">AI Assistant Active</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
 
-              {/* Popular & Trending Courses */}
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Popular & Trending Courses</h2>
-                
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg overflow-hidden mb-2 relative">
-                      <img src="/api/placeholder/256/160" alt="AI Prompts" className="w-full h-full object-cover" />
-                      <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
-                        LEARN AI
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-lg font-bold">Useful AI Prompts</p>
-                        <p className="text-lg font-bold">for Professionals</p>
-                      </div>
+            {/* Push the rest of the UI down by 50% when Anam panel is open */}
+            <div style={{ marginTop: showAnamPanel ? '50vh' : 0 }}>
+              {/* Course Category Cards - Scrollable Grid */}
+              <div className="space-y-4 mb-8">
+                {/* First Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <div className="h-32 bg-gray-700 relative overflow-hidden">
+                      <img src="/api/placeholder/200/128" alt="Popular" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold">Popular &</h3>
+                      <h3 className="font-semibold">Trending</h3>
                     </div>
                   </div>
                   
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-gray-200 rounded-lg overflow-hidden mb-2 relative">
-                      <div className="absolute inset-0 flex items-center justify-center bg-white">
-                        <div className="text-center p-4">
-                          <p className="text-xs text-gray-600 mb-2">Monday Monday</p>
-                          <div className="flex gap-2 text-[8px] text-gray-500 mb-2">
-                            <span>Home</span>
-                            <span>Common Project Podcast</span>
-                            <span>The Artist's Way Book Daily</span>
-                            <span>About</span>
-                          </div>
-                          <div className="w-full h-24 bg-gray-100 rounded"></div>
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <div className="h-32 bg-gray-700 relative overflow-hidden">
+                      <img src="/api/placeholder/200/128" alt="Technology" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <p className="text-xs">Cheat Code For</p>
+                        <p className="text-sm font-semibold">LinkedIn Replies</p>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold">Technology</h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Second Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <div className="h-32 bg-gray-700 relative overflow-hidden">
+                      <img src="/api/placeholder/200/128" alt="Personal Development" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold">Personal</h3>
+                      <h3 className="font-semibold">Development</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Looking for something else */}
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-xl p-6 mb-4">
+                  <h2 className="text-xl font-bold">Looking for something else?</h2>
+                </div>
+              </div>
+
+              {/* Continue scrolling content below */}
+              <div className="space-y-8">
+                {/* Category Pills */}
+                <div className="flex flex-wrap gap-3">
+                  <div className="bg-blue-800 px-4 py-2 rounded-full text-sm">
+                    Business & Finance
+                  </div>
+                  <div className="bg-orange-800 px-4 py-2 rounded-full text-sm">
+                    Photo & Video
+                  </div>
+                  <div className="bg-purple-800 px-4 py-2 rounded-full text-sm">
+                    Technology
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl font-bold">Explore categories</h2>
+                
+                {/* New & Trending in Art & Design */}
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">New & Trending in Art & Design</h2>
+                  
+                  <div className="flex gap-4 overflow-x-auto">
+                    <div className="flex-shrink-0 w-40">
+                      <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
+                        <img src="/api/placeholder/160/160" alt="Art Course 1" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 w-40">
+                      <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
+                        <img src="/api/placeholder/160/160" alt="Art Course 2" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 w-40">
+                      <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2">
+                        <img src="/api/placeholder/160/160" alt="Art Course 3" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI & Technology Section */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
+                      <div className="text-white text-xs font-bold text-center">
+                        <div>AI</div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Explore</p>
+                      <h2 className="text-2xl font-bold">AI & Technology</h2>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4 overflow-x-auto pb-4">
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg overflow-hidden mb-2 relative">
+                        <img src="/api/placeholder/256/160" alt="10X Productivity" className="w-full h-full object-cover" />
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-sm">unlock the</p>
+                          <p className="text-2xl font-bold">POWER OF AI</p>
                         </div>
                       </div>
-                      <div className="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                        FREE COURSE
+                      <div className="text-sm font-semibold">10X Your Producti...</div>
+                      <div className="text-xs text-gray-400">The Expert Academy</div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-black rounded-lg overflow-hidden mb-2 relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-500 to-pink-500 opacity-50"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-32 h-20 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 blur-xl"></div>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
+                          LEARN AI
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-lg font-bold">AI Music and Sound</p>
+                          <p className="text-lg font-bold">Creation</p>
+                        </div>
                       </div>
+                      <div className="text-sm font-semibold">AI Music and Soun...</div>
+                      <div className="text-xs text-gray-400">Superintelligent</div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
+                        <img src="/api/placeholder/256/160" alt="Ultimate Guide" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
+                          LEARN AI
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-lg font-bold">The Ultimate Guide</p>
+                          <p className="text-lg font-bold">to AI for...</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold">The Ul...</div>
+                      <div className="text-xs text-gray-400">Superintelligent</div>
                     </div>
                   </div>
+                </div>
+
+                {/* Ready to learn section */}
+                <div className="text-center py-8">
+                  <h2 className="text-2xl font-bold mb-4">Ready to learn a new skill today?</h2>
+                  <button className="flex items-center gap-2 mx-auto text-green-400">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                    <span className="font-semibold">Edit your course topics</span>
+                  </button>
+                </div>
+
+                {/* Popular & Trending Courses */}
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Popular & Trending Courses</h2>
                   
-                  <div className="flex-shrink-0 w-64">
-                    <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
-                      <img src="/api/placeholder/256/160" alt="Get Ahead" className="w-full h-full object-cover" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-xs">Get a</p>
-                        <p className="text-lg font-bold">in 1 h</p>
+                  <div className="flex gap-4 overflow-x-auto pb-4">
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg overflow-hidden mb-2 relative">
+                        <img src="/api/placeholder/256/160" alt="AI Prompts" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded font-semibold">
+                          LEARN AI
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-lg font-bold">Useful AI Prompts</p>
+                          <p className="text-lg font-bold">for Professionals</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-gray-200 rounded-lg overflow-hidden mb-2 relative">
+                        <div className="absolute inset-0 flex items-center justify-center bg-white">
+                          <div className="text-center p-4">
+                            <p className="text-xs text-gray-600 mb-2">Monday Monday</p>
+                            <div className="flex gap-2 text-[8px] text-gray-500 mb-2">
+                              <span>Home</span>
+                              <span>Common Project Podcast</span>
+                              <span>The Artist's Way Book Daily</span>
+                              <span>About</span>
+                            </div>
+                            <div className="w-full h-24 bg-gray-100 rounded"></div>
+                          </div>
+                        </div>
+                        <div className="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+                          FREE COURSE
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 w-64">
+                      <div className="h-40 bg-gray-800 rounded-lg overflow-hidden mb-2 relative">
+                        <img src="/api/placeholder/256/160" alt="Get Ahead" className="w-full h-full object-cover" />
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-xs">Get a</p>
+                          <p className="text-lg font-bold">in 1 h</p>
+                        </div>
                       </div>
                     </div>
                   </div>
